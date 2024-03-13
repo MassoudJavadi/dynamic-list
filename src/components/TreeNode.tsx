@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-interface UserData {
+export interface UserData {
   userId: string;
   role: string;
   children?: UserData[];
 }
 
-interface ApiResponse {
+export interface ApiResponse {
   error: null;
   data: {
     children: UserData[];
@@ -35,7 +35,7 @@ const TreeNode: React.FC<{ node: UserData; depth: number }> = ({ node, depth }) 
 
   const fetchChildren = async (userId: string) => {
     try {
-      const response = await axios.get<ApiResponse>(`/api/users/${userId}/children`);
+      const response = await axios.get<ApiResponse>(`http://172.31.30.55:5006/api/v1/netWork/user?UserId=${userId}`);
       setChildren(response.data.data.children);
     } catch (error) {
       console.error("Error fetching children:", error);
@@ -49,16 +49,8 @@ const TreeNode: React.FC<{ node: UserData; depth: number }> = ({ node, depth }) 
   const horizontalLineLength = `${depth * 20}px`;
 
   return (
-    <div style={{ marginLeft: `${depth * 20}px` }}>
+    <div style={{ marginRight: `${depth * 20}px` }}>
       <div style={{ display: "flex", alignItems: "center" }}>
-        <div
-          style={{
-            width: horizontalLineLength,
-            height: "1px",
-            backgroundColor: "gray",
-            marginRight: "5px",
-          }}
-        />
         <div
           style={{
             width: "20px",
@@ -72,23 +64,25 @@ const TreeNode: React.FC<{ node: UserData; depth: number }> = ({ node, depth }) 
           }}
           onClick={toggleOpen}
         >
-          {node.children && node.children.length > 0 ? (isOpen ? "-" : "+") : ""}
+          {node.children || children?.length > 0 ? (isOpen ? "-" : "+") : ""}
         </div>
-        <div style={{ marginLeft: "5px" }}>
+        <div
+          style={{
+            width: horizontalLineLength,
+            height: "1px",
+            backgroundColor: "gray",
+            marginLeft: "5px",
+          }}
+        />
+
+        <div style={{ marginRight: "5px" }}>
           {node.role} ({node.userId})
         </div>
       </div>
-      {isOpen && node.children && node.children.length > 0 && (
-        <div style={{ marginLeft: "20px" }}>
-          {node.children.map((child, index) => (
+      {isOpen && (node.children || children?.length > 0) && (
+        <div style={{ marginRight: "20px" }}>
+          {(node.children || children).map((child, index) => (
             <React.Fragment key={index}>
-              <div
-                style={{
-                  height: "20px",
-                  borderLeft: "1px solid gray",
-                  marginLeft: "10px",
-                }}
-              />
               <TreeNode node={child} depth={depth + 1} />
             </React.Fragment>
           ))}
@@ -97,3 +91,5 @@ const TreeNode: React.FC<{ node: UserData; depth: number }> = ({ node, depth }) 
     </div>
   );
 };
+
+export default TreeNode;
