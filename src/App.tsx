@@ -1,4 +1,3 @@
-// App.tsx
 import React, { useState, useEffect } from "react";
 import TreeNode, { ApiResponse, UserData } from "./components/TreeNode";
 import axios from "axios";
@@ -21,7 +20,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="App" dir={"rtl"}>
+    <div className="App" dir="rtl">
       <div style={{ height: "100vh", width: "100vw" }}>{rootNode && <TreeNode node={rootNode} depth={0} />}</div>
     </div>
   );

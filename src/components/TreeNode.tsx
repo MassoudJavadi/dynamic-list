@@ -23,6 +23,35 @@ export interface ApiResponse {
   statusCode: number;
 }
 
+interface VerticalLineProps {
+  depth: number;
+  hasChildren: boolean;
+}
+const VerticalLine: React.FC<VerticalLineProps> = ({ depth, hasChildren }) => {
+  const marginLeft = `${depth * 20}px`;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        height: "100%",
+        marginLeft,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: "20px",
+          left: "9px",
+          height: hasChildren ? "calc(100% - 20px)" : "100%",
+          width: "1px",
+          backgroundColor: "gray",
+        }}
+      />
+    </div>
+  );
+};
+
 const TreeNode: React.FC<{ node: UserData; depth: number }> = ({ node, depth }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [children, setChildren] = useState<UserData[]>([]);
@@ -35,7 +64,7 @@ const TreeNode: React.FC<{ node: UserData; depth: number }> = ({ node, depth }) 
 
   const fetchChildren = async (userId: string) => {
     try {
-      const response = await axios.get<ApiResponse>(`http://172.31.30.55:5006/api/v1/netWork/user?UserId=${userId}`);
+      const response = await axios.get(`http://172.31.30.55:5006/api/v1/netWork/user?UserId=${userId}`);
       setChildren(response.data.data.children);
     } catch (error) {
       console.error("Error fetching children:", error);
@@ -46,41 +75,38 @@ const TreeNode: React.FC<{ node: UserData; depth: number }> = ({ node, depth }) 
     setIsOpen(!isOpen);
   };
 
-  const horizontalLineLength = `${depth * 20}px`;
-
   return (
-    <div style={{ marginRight: `${depth * 20}px` }}>
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <div
-          style={{
-            width: "20px",
-            height: "20px",
-            backgroundColor: "gray",
-            borderRadius: "50%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            cursor: "pointer",
-          }}
-          onClick={toggleOpen}
-        >
-          {node.children || children?.length > 0 ? (isOpen ? "-" : "+") : ""}
-        </div>
-        <div
-          style={{
-            width: horizontalLineLength,
-            height: "1px",
-            backgroundColor: "gray",
-            marginLeft: "5px",
-          }}
-        />
+    <div style={{ height: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center" }} onClick={toggleOpen}>
+        <VerticalLine depth={depth} hasChildren={!!(isOpen && (node.children || children?.length > 0))} />
 
-        <div style={{ marginRight: "5px" }}>
-          {node.role} ({node.userId})
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            width: "440px",
+            background: "#CFDBE3",
+            borderRadius: "4px",
+            padding: "8px",
+            margin: "4px",
+          }}
+        >
+          {node.children || children?.length > 0 ? (
+            isOpen ? (
+              <img src="/icons/chevron-down.png" width={16} height={9} style={{ rotate: "180deg" }} />
+            ) : (
+              <img src="/icons/chevron-down.png" width={16} height={9} />
+            )
+          ) : (
+            ""
+          )}
+          <div style={{ marginRight: "5px" }}>
+            {node.role} ({node.userId})
+          </div>
         </div>
       </div>
       {isOpen && (node.children || children?.length > 0) && (
-        <div style={{ marginRight: "20px" }}>
+        <div style={{ marginLeft: "30px" }}>
           {(node.children || children).map((child, index) => (
             <React.Fragment key={index}>
               <TreeNode node={child} depth={depth + 1} />
