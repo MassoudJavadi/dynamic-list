@@ -12,7 +12,7 @@ const App: React.FC = () => {
   const fetchRootNode = async () => {
     try {
       const response = await axios.get<any>("http://172.31.30.55:5006/api/v1/netWork/3");
-      console.log("RESP", response);
+      // console.log("RESP", response);
       setRootNode(response.data.data);
     } catch (error) {
       console.error("Error fetching root node:", error);

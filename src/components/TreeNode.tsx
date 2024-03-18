@@ -56,7 +56,6 @@ const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [children, setChildren] = useState<UserData[]>([]);
 
-  console.log("NODE", node);
   useEffect(() => {
     if (isOpen && !node.children) {
       fetchChildren(node.userId);
