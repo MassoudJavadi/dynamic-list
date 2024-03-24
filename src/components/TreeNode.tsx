@@ -1,27 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
-export interface UserData {
-  userId: string;
-  role: string;
-  children?: UserData[];
-}
-
-export interface ApiResponse {
-  error: null;
-  data: {
-    children: UserData[];
-    parent: UserData;
-    userInfo: {
-      role: string;
-      chiefId: string;
-      parentId: number;
-      netWorkMemberId: number;
-    };
-  };
-  isSuccess: boolean;
-  statusCode: number;
-}
+import { UserData } from "../App";
 
 interface VerticalLineProps {
   depth: number;
@@ -90,6 +69,7 @@ const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
             paddingRight: "10px",
             paddingLeft: "10px",
             margin: "4px",
+            cursor: "pointer",
           }}
         >
           {node.children || children?.length > 0 ? (

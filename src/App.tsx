@@ -1,6 +1,28 @@
 import React, { useState, useEffect } from "react";
-import TreeNode, { ApiResponse, UserData } from "./components/TreeNode";
+import TreeNode from "./components/TreeNode";
 import axios from "axios";
+
+export interface UserData {
+  userId: string;
+  role: string;
+  children?: UserData[];
+}
+
+export interface ApiResponse {
+  error: null;
+  data: {
+    children: UserData[];
+    parent: UserData;
+    userInfo: {
+      role: string;
+      chiefId: string;
+      parentId: number;
+      netWorkMemberId: number;
+    };
+  };
+  isSuccess: boolean;
+  statusCode: number;
+}
 
 const App: React.FC = () => {
   const [rootNode, setRootNode] = useState<UserData | null>(null);
