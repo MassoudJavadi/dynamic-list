@@ -1,32 +1,46 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { UserData } from "../App";
 
 interface VerticalLineProps {
   depth: number;
   hasChildren: boolean;
+  isLastChild: boolean;
+  containerHeight: string | number;
+  isOpen: boolean; // Added isOpen prop
 }
-const VerticalLine: React.FC<VerticalLineProps> = ({ depth, hasChildren }) => {
-  const marginLeft = `${depth * 20}px`;
+
+const VerticalLine: React.FC<VerticalLineProps> = ({
+  hasChildren,
+  isLastChild,
+  containerHeight,
+  isOpen, // Added isOpen prop
+}) => {
+  const height = isLastChild ? "20px" : containerHeight;
+
+  // Show verticalLine only when isOpen is true for that level
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div
       style={{
         position: "relative",
         height: "100%",
-        marginLeft,
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          top: "20px",
-          left: "9px",
-          height: hasChildren ? "calc(100% - 20px)" : "100%",
-          width: "1px",
-          backgroundColor: "gray",
-        }}
-      />
+      {hasChildren && (
+        <div
+          style={{
+            position: "absolute",
+            top: "20px",
+            right: 24,
+            height,
+            borderRight: "2px dashed gray",
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -34,12 +48,20 @@ const VerticalLine: React.FC<VerticalLineProps> = ({ depth, hasChildren }) => {
 const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [children, setChildren] = useState<UserData[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState<string | number>("");
 
   useEffect(() => {
     if (isOpen && !node.children) {
       fetchChildren(node.userId);
     }
   }, [isOpen, node.userId, node.children]);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerHeight(containerRef.current.offsetHeight);
+    }
+  }, [isOpen, children]);
 
   const fetchChildren = async (userId: string) => {
     try {
@@ -54,11 +76,18 @@ const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
     setIsOpen(!isOpen);
   };
 
+  const isLastChild = !node.children && !children?.length;
+
   return (
     <div style={{ height: "100%" }}>
       <div style={{ display: "flex", alignItems: "center" }} onClick={toggleOpen}>
-        <VerticalLine depth={depth} hasChildren={!!(isOpen && (node.children || children?.length > 0))} />
-
+        <VerticalLine
+          depth={depth}
+          hasChildren={!!(node.children || children?.length > 0)}
+          isLastChild={isLastChild}
+          containerHeight={containerHeight}
+          isOpen={isOpen} // Pass isOpen to VerticalLine
+        />
         <div
           style={{
             display: "flex",
@@ -91,12 +120,12 @@ const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
             }}
           >
             <p>{node.userId || node?.userInfo?.chiefId}</p>
-            <p style={{ fontSize: "10px" }}> {node.role || node?.userInfo?.role}</p>
+            <p style={{ fontSize: "10px" }}>{node.role || node?.userInfo?.role}</p>
           </div>
         </div>
       </div>
       {isOpen && (node.children || children?.length > 0) && (
-        <div style={{ marginLeft: "30px" }}>
+        <div style={{ marginRight: "30px" }} ref={containerRef}>
           {(node.children || children).map((child: any, index: number) => (
             <React.Fragment key={index}>
               <TreeNode node={child} depth={depth + 1} />
