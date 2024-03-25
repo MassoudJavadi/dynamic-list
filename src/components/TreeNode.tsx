@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { UserData } from "../App";
+import { makeStyles } from "@mui/styles";
+import { Typography } from "@mui/material";
 
 interface VerticalLineProps {
   hasChildren: boolean;
@@ -9,30 +11,29 @@ interface VerticalLineProps {
 }
 
 const VerticalLine: React.FC<VerticalLineProps> = ({ hasChildren, containerHeight, isOpen }) => {
-  const [currentContainerHeight, setCurrentContainerHeight] = useState<any>(containerHeight);
-
-  useEffect(() => {
-    // Update the currentContainerHeight whenever containerHeight changes
-    setCurrentContainerHeight(containerHeight);
-  }, [containerHeight]);
-
-  const verticalLineStyle: React.CSSProperties = useMemo(() => {
-    return {
+  const useStyles = makeStyles({
+    verticalLine: {
       position: "absolute",
       top: "20px",
       right: 24,
-      // height: currentContainerHeight,
+      height: containerHeight || 0,
       // borderRight: "2px dashed gray",
-    };
-  }, [currentContainerHeight]);
+    },
+  });
 
-  // Show verticalLine only when isOpen is true for that level
+  const classes = useStyles();
+
   if (!isOpen) {
     return null;
   }
 
-  return <div style={{ position: "relative", height: "100%" }}>{hasChildren && <div style={verticalLineStyle} />}</div>;
+  return (
+    <div style={{ position: "relative", height: "100%" }}>
+      {hasChildren && <div className={classes.verticalLine} />}
+    </div>
+  );
 };
+
 const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [children, setChildren] = useState<UserData[]>([]);
@@ -58,46 +59,50 @@ const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
     setIsOpen(!isOpen);
   };
 
-  const calculateContainerHeight = () => {
+  useEffect(() => {
     if (containerRef.current) {
       setContainerHeight(containerRef.current.offsetHeight);
     }
-  };
-
-  useEffect(() => {
-    calculateContainerHeight();
   }, [isOpen, children]);
 
+  const useStyles = makeStyles({
+    container: {
+      height: "100%",
+    },
+    treeNode: {
+      display: "flex",
+      alignItems: "center",
+      cursor: "pointer",
+    },
+    treeNodeContent: {
+      display: "flex",
+      alignItems: "center",
+      width: "440px",
+      background: "#CFDBE3",
+      borderRadius: "4px",
+      padding: "10px",
+      margin: "4px",
+    },
+  });
+
+  const classes = useStyles();
+
   return (
-    <div style={{ height: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center" }} onClick={toggleOpen}>
+    <div className={classes.container}>
+      <div className={classes.treeNode} onClick={toggleOpen}>
         <VerticalLine
           hasChildren={!!(node.children || children?.length > 0)}
           containerHeight={containerHeight}
           isOpen={isOpen}
         />
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            width: "440px",
-            background: "#CFDBE3",
-            borderRadius: "4px",
-            paddingRight: "10px",
-            paddingLeft: "10px",
-            margin: "4px",
-            cursor: "pointer",
-          }}
-        >
-          {node.children || children?.length > 0 ? (
-            isOpen ? (
-              <img src="/icons/chevron-down.png" width={16} height={9} style={{ rotate: "180deg" }} />
-            ) : (
-              <img src="/icons/chevron-down.png" width={16} height={9} />
-            )
-          ) : (
-            <img src="/icons/chevron-down.png" width={16} height={9} />
-          )}
+        <div className={classes.treeNodeContent}>
+          <img
+            src="/icons/chevron-down.png"
+            alt="chevron"
+            width={16}
+            height={9}
+            style={{ transform: `rotate(${isOpen ? "180deg" : "0deg"})` }}
+          />
           <div
             style={{
               marginRight: "5px",
@@ -107,8 +112,8 @@ const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
               width: "100vw",
             }}
           >
-            <p>{node.userId || node?.userInfo?.chiefId}</p>
-            <p style={{ fontSize: "10px" }}>{node.role || node?.userInfo?.role}</p>
+            <Typography>{node.userId || node?.userInfo?.chiefId}</Typography>
+            <Typography style={{ fontSize: "10px" }}>{node.role || node?.userInfo?.role}</Typography>
           </div>
         </div>
       </div>
