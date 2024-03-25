@@ -1,67 +1,49 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import axios from "axios";
 import { UserData } from "../App";
+import { Box, Typography, styled } from "@mui/material";
 
 interface VerticalLineProps {
-  depth: number;
+  $containerHeight: number | null;
   hasChildren: boolean;
-  isLastChild: boolean;
-  containerHeight: string | number;
-  isOpen: boolean; // Added isOpen prop
+  isOpen: boolean;
 }
 
-const VerticalLine: React.FC<VerticalLineProps> = ({
-  hasChildren,
-  isLastChild,
-  containerHeight,
-  isOpen, // Added isOpen prop
-}) => {
-  const height = isLastChild ? "20px" : containerHeight;
+const VerticalLine = styled("div")<VerticalLineProps>(({ theme, $containerHeight }) => ({
+  position: "absolute",
+  top: "20px",
+  right: 24,
+  height: $containerHeight || 0,
+  borderRight: `2px dashed ${theme.palette.grey[500]}`,
+}));
 
-  // Show verticalLine only when isOpen is true for that level
-  if (!isOpen) {
-    return null;
-  }
+const TreeNodeContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  width: "440px",
+  backgroundColor: theme.palette.grey[200],
+  borderRadius: theme.shape.borderRadius,
+  padding: `${theme.spacing(1)} ${theme.spacing(1.25)}`,
+  margin: theme.spacing(0.5),
+  cursor: "pointer",
+}));
 
-  return (
-    <div
-      style={{
-        position: "relative",
-        height: "100%",
-      }}
-    >
-      {hasChildren && (
-        <div
-          style={{
-            position: "absolute",
-            top: "20px",
-            right: 24,
-            height,
-            borderRight: "2px dashed gray",
-          }}
-        />
-      )}
-    </div>
-  );
-};
+interface TreeNodeProps {
+  node: any;
+  depth: number;
+}
 
-const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const TreeNode: React.FC<TreeNodeProps> = ({ node, depth }) => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [children, setChildren] = useState<UserData[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState<string | number>("");
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerHeight, setContainerHeight] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen && !node.children) {
       fetchChildren(node.userId);
     }
   }, [isOpen, node.userId, node.children]);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      setContainerHeight(containerRef.current.offsetHeight);
-    }
-  }, [isOpen, children]);
 
   const fetchChildren = async (userId: string) => {
     try {
@@ -76,64 +58,62 @@ const TreeNode: React.FC<{ node: any; depth: number }> = ({ node, depth }) => {
     setIsOpen(!isOpen);
   };
 
-  const isLastChild = !node.children && !children?.length;
+  const calculateContainerHeight = () => {
+    if (containerRef.current) {
+      setContainerHeight(containerRef.current.offsetHeight);
+    }
+  };
+
+  useEffect(() => {
+    calculateContainerHeight();
+  }, [isOpen, children]);
 
   return (
-    <div style={{ height: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center" }} onClick={toggleOpen}>
+    <Box sx={{ height: "100%" }}>
+      <TreeNodeContainer onClick={toggleOpen}>
         <VerticalLine
-          depth={depth}
+          $containerHeight={containerHeight}
           hasChildren={!!(node.children || children?.length > 0)}
-          isLastChild={isLastChild}
-          containerHeight={containerHeight}
-          isOpen={isOpen} // Pass isOpen to VerticalLine
+          isOpen={isOpen}
         />
-        <div
-          style={{
+        {node.children || children?.length > 0 ? (
+          isOpen ? (
+            <img
+              src="/icons/chevron-down.png"
+              width={16}
+              height={9}
+              style={{ transform: "rotate(180deg)" }}
+              alt="Expand"
+            />
+          ) : (
+            <img src="/icons/chevron-down.png" width={16} height={9} alt="Collapse" />
+          )
+        ) : (
+          <img src="/icons/chevron-down.png" width={16} height={9} alt="Collapsed" />
+        )}
+        <Box
+          sx={{
+            marginLeft: 1,
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            width: "440px",
-            background: "#CFDBE3",
-            borderRadius: "4px",
-            paddingRight: "10px",
-            paddingLeft: "10px",
-            margin: "4px",
-            cursor: "pointer",
+            width: "100%",
           }}
         >
-          {node.children || children?.length > 0 ? (
-            isOpen ? (
-              <img src="/icons/chevron-down.png" width={16} height={9} style={{ rotate: "180deg" }} />
-            ) : (
-              <img src="/icons/chevron-down.png" width={16} height={9} />
-            )
-          ) : (
-            <img src="/icons/chevron-down.png" width={16} height={9} />
-          )}
-          <div
-            style={{
-              marginRight: "5px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100vw",
-            }}
-          >
-            <p>{node.userId || node?.userInfo?.chiefId}</p>
-            <p style={{ fontSize: "10px" }}>{node.role || node?.userInfo?.role}</p>
-          </div>
-        </div>
-      </div>
+          <Typography>{node.userId || node?.userInfo?.chiefId}</Typography>
+          <Typography variant="body2">{node.role || node?.userInfo?.role}</Typography>
+        </Box>
+      </TreeNodeContainer>
       {isOpen && (node.children || children?.length > 0) && (
-        <div style={{ marginRight: "30px" }} ref={containerRef}>
+        <Box sx={{ marginRight: "30px" }} ref={containerRef}>
           {(node.children || children).map((child: any, index: number) => (
             <React.Fragment key={index}>
               <TreeNode node={child} depth={depth + 1} />
             </React.Fragment>
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
